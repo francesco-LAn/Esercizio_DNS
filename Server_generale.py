@@ -29,13 +29,11 @@ class Struttura_server:
                         print("Errore di lettura formato JSON, server ancora attivo")
                         risposta = {"status": "error", "message": "SERVIZIO INESISTENTE"}       #Invia in caso di errore di json
                         await self.invia_messaggio(writer,risposta)
-                        break           #Poi però chiude la comunicazione come al solito, perché altrimenti il client rimane attivo inutilmente
 
                     except (KeyError, TypeError):
                         print("Errore formato richiesta")
                         risposta = {"status": "error", "message": "CAMPO MANCANTE"}       #Invia in caso di errore di json
-                        await self.invia_messaggio(writer,risposta)
-                        break
+                        await self.invia_messaggio(writer,risposta)                    
 
                 else:      #Caso di richiesta uguale a vuoto b''
                     break
