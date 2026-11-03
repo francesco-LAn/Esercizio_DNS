@@ -75,12 +75,19 @@ class Name_server(Struttura_server):
                 "host": self.diz_servizi[servizio_richiesto]["host"], "port": self.diz_servizi[servizio_richiesto]["porta"]}                                
 
             else:  #!Se invece non esiste quel servizio nella lista
-                risposta =  {"status": "error", "message": "SERVIZIO INESISTENTE"}                            
+                risposta =  {"status": "error", "message": "SERVIZIO INESISTENTE"}      
 
-        else:
+        elif dati_leggibili["cmd"] == "list":
+            servizi = []
+            for servizio in self.diz_servizi:       #Scorre tutte le chiavi del dizionario che contiene i servizi
+                servizi.append(servizio)           #Li aggiunge agli elementi della lista
+
+            risposta = risposta =  {"status": "ok", "servizi": servizi}
+
+        else:                                       #Se cmd è diverso da questi: allora da errore
             risposta =  {"status": "error", "message": "COMANDO INESISTENTE"}
 
-        return risposta
+        return risposta #QUALUNQUE SIA LA RISPOSTA viene ritornata alla funzione principale
 
 
 

@@ -15,7 +15,7 @@ parser.add_argument("--messaggio",default='default', help="valore facoltativo e 
 args = parser.parse_args()      #Faccio partire l'esecuzione del parser
 PORTA = 6000
 ip = args.ip
-servizio = args.servizio                #Può essere: 'time - 'echo'
+servizio = args.servizio                #Può essere: 'time - 'echo' o 'list'
 messaggio = args.messaggio
 
 
@@ -25,43 +25,53 @@ async def main():
         if messaggio != "default":              #Il campo messaggio deve essere vuoto in questo caso
             print("Errore di sintassi comando, messaggio non necessario!")
             writer.close()    #!Chiusura client
-            return   
+            return            #Termina subito
     try:
         reader, writer = await asyncio.open_connection(ip,PORTA)            #Il client conosce solo questa porta, quindi si connette a lui di base, poi le altre le deve richiedere
         
         #Se per caso il servizio non esiste, viene inviato lo stesso poi sarà il server a dare ERRORE
-        richiesta = {"cmd":"lookup","service":servizio}     
-    
-        risposta_leggibile = await invio_richieste(writer,reader,richiesta)        #*1 INVIO ----------------------------------------
-
-        if risposta_leggibile['status'] == 'ok':
-            porta_ottenuto = risposta_leggibile['port']
-            ip_ottenuto = risposta_leggibile["host"]
-            reader2, writer2 = await asyncio.open_connection(ip_ottenuto,porta_ottenuto)
-
-            if servizio == "echo":
-                richiesta = {"cmd": "echo","text": messaggio}
-            
+        if servizio == 'list':      #Allora la struttura è diversa
+            richiesta = {"cmd":"list"} 
+            risposta_leggibile = await invio_richieste(writer,reader,richiesta)
+            if risposta_leggibile['status'] == 'ok':
+                print(risposta_leggibile["servizi"])
             else:
-                richiesta = {"cmd": "time"}
+                print(risposta_leggibile["message"])
+                
+        else:
 
-            #2 INVIO --------------------------------------------------------
-            risposta_leggibile = await invio_richieste(writer2,reader2,richiesta)
+            richiesta = {"cmd":"lookup","service":servizio}     
+        
+            risposta_leggibile = await invio_richieste(writer,reader,richiesta)        #*1 INVIO ----------------------------------------
 
             if risposta_leggibile['status'] == 'ok':
-                if servizio == "time":
-                    print(risposta_leggibile["time"])
+                porta_ottenuto = risposta_leggibile['port']
+                ip_ottenuto = risposta_leggibile["host"]
+                reader2, writer2 = await asyncio.open_connection(ip_ottenuto,porta_ottenuto)
+
+                if servizio == "echo":
+                    richiesta = {"cmd": "echo","text": messaggio}
+                
                 else:
-                    print(risposta_leggibile["text"])
+                    richiesta = {"cmd": "time"}
 
-            else:  #Caso di STATUS errato
+                #2 INVIO --------------------------------------------------------
+                risposta_leggibile = await invio_richieste(writer2,reader2,richiesta)
+
+                if risposta_leggibile['status'] == 'ok':
+                    if servizio == "time":
+                        print(risposta_leggibile["time"])
+                    else:
+                        print(risposta_leggibile["text"])
+
+                else:  #Caso di STATUS errato
+                    print(risposta_leggibile["message"])
+
+                writer2.close()
+
+
+            else:       #Caso di STATUS errato
                 print(risposta_leggibile["message"])
-
-            writer2.close()
-
-
-        else:       #Caso di STATUS errato
-            print(risposta_leggibile["message"])
     
     except ConnectionError:
         print("Errore di connessione")
